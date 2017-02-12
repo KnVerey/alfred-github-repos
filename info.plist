@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>bundleid</key>
-	<string>sh.edgar.alfred.GithubRepos</string>
+	<string>com.knverey.alfred-github-repos</string>
 	<key>category</key>
 	<string>Productivity</string>
 	<key>connections</key>
@@ -75,9 +75,9 @@
 		</array>
 	</dict>
 	<key>createdby</key>
-	<string>Edgar Suarez</string>
+	<string>Katrina Verey (based on workflow by Edgar Suarez)</string>
 	<key>description</key>
-	<string>Open your github repos</string>
+	<string>Quckly open your github repos</string>
 	<key>disabled</key>
 	<false/>
 	<key>name</key>
@@ -368,6 +368,6 @@ fi</string>
 		</dict>
 	</dict>
 	<key>webaddress</key>
-	<string>https://github.com/edgarjs/alfred-github-repos</string>
+	<string>https://github.com/KnVerey/alfred-github-repos</string>
 </dict>
 </plist>
