@@ -30,6 +30,7 @@ class Github
     File.delete(USER_CACHE_FILE) if File.exist?(USER_CACHE_FILE)
     load_token!
     user_and_orgs
+    true
   rescue AuthenticationError, APIError => e
     puts e.message
     false
