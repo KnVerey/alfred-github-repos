@@ -1,14 +1,13 @@
 #!/usr/bin/env ruby
 
-require './xml_builder'
-
 require 'json'
 require 'net/http'
 require 'cgi'
 require 'open3'
 
-class AuthenticationError < StandardError; end
-class APIError < StandardError; end
+class AlfredGithubError < StandardError; end
+class AuthenticationError < AlfredGithubError; end
+class APIError < AlfredGithubError; end
 
 class Github
   KEYCHAIN_ENTRY = "alfred-github-workflow".freeze
@@ -17,8 +16,8 @@ class Github
 
   def store_token(token)
     _, err, st = Open3.capture3("security add-generic-password -a $USER -s #{KEYCHAIN_ENTRY} -w #{token} -U")
+    raise AuthenticationError.new("Failed to store token in keychain") unless st.success?
     File.delete(USER_CACHE_FILE) if File.exist?(USER_CACHE_FILE)
-    st.success?
   end
 
   def search_repo(query)
@@ -29,11 +28,7 @@ class Github
   def refresh_users
     File.delete(USER_CACHE_FILE) if File.exist?(USER_CACHE_FILE)
     load_token!
-    user_and_orgs
-    true
-  rescue AuthenticationError, APIError => e
-    puts e.message
-    false
+    cache_user_and_orgs
   end
 
   private
@@ -41,9 +36,9 @@ class Github
   def load_token!
     @token, err, st = Open3.capture3("security find-generic-password -a $USER -s #{KEYCHAIN_ENTRY} -w")
     if !st.success?
-      raise AuthenticationError.new("Unable to retrieve access token from keychain / #{err}")
+      raise AuthenticationError.new("Keychain entry not found. Use gh-auth to fix this.")
     elsif !@token || @token.empty?
-      raise AuthenticationError.new("Invalid token retrieved from keychain / Please re-run gh-auth with valid token")
+      raise AuthenticationError.new("Invalid token retrieved from keychain. Use gh-auth to fix this.")
     end
   end
 
@@ -65,14 +60,20 @@ class Github
     end
     return @user_and_orgs unless @user_and_orgs.empty?
 
-    results = get "/user/orgs"
-    results.each_with_object([]) do |org, orgs|
-      @user_and_orgs << org["login"]
+    @user_and_orgs = cache_user_and_orgs
+  end
+
+  def cache_user_and_orgs
+    org_results = get "/user/orgs"
+    found = org_results.each_with_object([]) do |org, orgs|
+      orgs << org["login"]
     end
+
     user_result = get "/user"
-    @user_and_orgs << user_result["login"]
-    File.write(USER_CACHE_FILE, @user_and_orgs.join("\n"))
-    @user_and_orgs
+    found << user_result["login"]
+
+    File.write(USER_CACHE_FILE, found.join("\n"))
+    found
   end
 
   def get(path, params = {})
@@ -86,8 +87,14 @@ class Github
       req['Authorization'] = "token #{@token}"
       http.request(req)
     end
-    if response.code.to_i > 399
-      raise APIError.new("Error communicating with Github / GET #{path} #{response.code}")
+
+    response_code = response.code.to_i
+    if response_code == 401
+      raise AuthenticationError.new("Github auth error (#{response_code}). Add a valid token using gh-auth to fix this.")
+    elsif response_code == 403
+      raise AuthenticationError.new("Github auth error (#{response_code}). Github token must have 'repo' and 'public_repo' permissions.")
+    elsif response_code > 399
+      raise APIError.new("Error communicating with Github. Details: GET #{path} #{response_code}")
     end
     JSON.parse(response.body)
   end
@@ -95,38 +102,52 @@ end
 
 case ARGV[0]
 when '--auth'
-  success = Github.new.store_token(ARGV[1])
-  exit success
+  begin
+    Github.new.store_token(ARGV[1])
+    puts "Successfully stored auth token in keychain"
+  rescue AlfredGithubError => e
+    puts e.message
+  end
+
 when '--refresh'
-  success = Github.new.refresh_users
-  exit success
+  begin
+    Github.new.refresh_users
+    puts "Successfully refreshed user cache"
+  rescue AlfredGithubError => e
+    puts e.message
+  end
+
 when '--search'
   begin
     results = Github.new.search_repo(ARGV[1] || '')
-
-    output = XmlBuilder.build do |xml|
-      xml.items do
-        results.each do |repo|
-          xml.item Item.new(repo['url'], repo['url'], repo['name'], repo['url'], 'yes')
-        end
-      end
+    alfred_results = results.map do |repo|
+      {
+        "uid" => "gh-search-#{ARGV[1]}",
+        "title" => repo['name'],
+        "subtitle" => repo['url'],
+        "arg" => repo['url'],
+        "autocomplete" => repo['name'],
+        "quicklookurl" => repo['url']
+      }
     end
-    puts output
+    alfred_results = { "items" => alfred_results }.to_json
+    puts alfred_results
   rescue AuthenticationError => e
-    main_message, secondary_message = e.message.split("/", 2)
-    output = XmlBuilder.build do |xml|
-      xml.items do
-        xml.item Item.new('gh-error', 'gh-auth', main_message, secondary_message, 'yes')
-      end
-    end
-    puts output
+    main_message, secondary_message = e.message.split(".", 2)
+    alfred_results = [{
+      "title" => main_message,
+      "subtitle" => "Hit enter to use gh-auth to add a valid token.",
+      "arg" => 'gh-auth'
+    }]
+    alfred_results = { "items" => alfred_results }.to_json
+    puts alfred_results
   rescue APIError => e
-    main_message, secondary_message = e.message.split("/", 2)
-    output = XmlBuilder.build do |xml|
-      xml.items do
-        xml.item Item.new('gh-error', 'api-fail', main_message, secondary_message, 'yes')
-      end
-    end
-    puts output
+    main_message, secondary_message = e.message.split(".", 2)
+    alfred_results = [{
+      "title" => main_message,
+      "subtitle" => secondary_message
+    }]
+    alfred_results = { "items" => alfred_results }.to_json
+    puts alfred_results
   end
 end

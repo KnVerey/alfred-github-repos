@@ -145,7 +145,7 @@ case "$qry" in
 	open "$qry"
 	;;
   gh-auth*) # switch to gh-auth
-	osascript -e 'tell Application "Alfred 2" to search "'"$qry"'"'
+	osascript -e 'tell Application "Alfred 3" to search "'"$qry"'"'
 	;;
 esac</string>
 				<key>scriptargtype</key>
@@ -194,12 +194,7 @@ esac</string>
 				<string># change this to a recent ruby version on your system
 export PATH="/opt/rubies/2.3.3/bin:$PATH"
 
-./github --refresh
-if [[ $? != 0 ]]; then
-	echo "Failed to refresh user cache"
-else
-	echo "Successfully refreshed user cache"
-fi</string>
+./github --refresh</string>
 				<key>scriptargtype</key>
 				<integer>0</integer>
 				<key>scriptfile</key>
@@ -224,9 +219,9 @@ fi</string>
 				<key>removeextension</key>
 				<false/>
 				<key>text</key>
-				<string></string>
-				<key>title</key>
 				<string>{query}</string>
+				<key>title</key>
+				<string>gh-refresh</string>
 			</dict>
 			<key>type</key>
 			<string>alfred.workflow.output.notification</string>
@@ -234,6 +229,39 @@ fi</string>
 			<string>8CB21C29-3AF6-4E12-A2C8-E8670FE56AA8</string>
 			<key>version</key>
 			<integer>1</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>script</key>
+				<string># change this to a recent ruby version on your system
+export PATH="/opt/rubies/2.3.3/bin:$PATH"
+
+qry="{query}"
+qry="${qry// /}"
+
+if [[ -z $qry ]]; then
+	open https://github.com/settings/tokens/new
+else
+	./github --auth "$qry"
+fi</string>
+				<key>scriptargtype</key>
+				<integer>0</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>0181D01E-433D-4461-B212-F01CBDA53091</string>
+			<key>version</key>
+			<integer>2</integer>
 		</dict>
 		<dict>
 			<key>config</key>
@@ -259,54 +287,16 @@ fi</string>
 		<dict>
 			<key>config</key>
 			<dict>
-				<key>concurrently</key>
-				<false/>
-				<key>escaping</key>
-				<integer>102</integer>
-				<key>script</key>
-				<string># change this to a recent ruby version on your system
-export PATH="/opt/rubies/2.3.3/bin:$PATH"
-
-qry="{query}"
-qry="${qry// /}"
-
-if [[ -z $qry ]]; then
-	open https://github.com/settings/tokens/new
-else
-	./github --auth "$qry"
-	if [[ $? != 0 ]]; then
-		echo "Failed to store auth token in keychain"
-	else
-		echo "Successfully stored auth token in keychain"
-	fi
-fi</string>
-				<key>scriptargtype</key>
-				<integer>0</integer>
-				<key>scriptfile</key>
-				<string></string>
-				<key>type</key>
-				<integer>0</integer>
-			</dict>
-			<key>type</key>
-			<string>alfred.workflow.action.script</string>
-			<key>uid</key>
-			<string>0181D01E-433D-4461-B212-F01CBDA53091</string>
-			<key>version</key>
-			<integer>2</integer>
-		</dict>
-		<dict>
-			<key>config</key>
-			<dict>
 				<key>lastpathcomponent</key>
 				<false/>
 				<key>onlyshowifquerypopulated</key>
-				<false/>
+				<true/>
 				<key>removeextension</key>
 				<false/>
 				<key>text</key>
-				<string></string>
-				<key>title</key>
 				<string>{query}</string>
+				<key>title</key>
+				<string>gh-auth</string>
 			</dict>
 			<key>type</key>
 			<string>alfred.workflow.output.notification</string>
@@ -346,7 +336,7 @@ fi</string>
 			<key>xpos</key>
 			<integer>700</integer>
 			<key>ypos</key>
-			<real>130</real>
+			<integer>130</integer>
 		</dict>
 		<key>9C8AF5E1-FB99-44C2-9FFD-5DFC67366C10</key>
 		<dict>
