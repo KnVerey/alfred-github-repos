@@ -1,9 +1,10 @@
 Quickly find your GitHub repositories from [Alfred](http://www.alfredapp.com/).
 
-# Download from Packal
+Forked from edgarjs/alfred-github-repos
 
-<http://www.packal.org/workflow/github-repos>
-
+# Different in this fork
+- Uses your OSX keychain to store your Github auth token
+- Uses the ruby version I personally want (`#!/opt/rubies/2.3.3/bin/ruby`) instead of system ruby
 
 # Usage
 
@@ -52,7 +53,3 @@ Note: the local cache will only be used for your own repositories. Once you prov
 # License
 
 This is released under the [MIT License](http://opensource.org/licenses/MIT).
-
-# Feedback
-
-[@edgarjs](http://twitter.com/edgarjs)

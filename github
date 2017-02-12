@@ -1,27 +1,22 @@
-#!/usr/bin/env ruby
+#!/opt/rubies/2.3.3/bin/ruby
 
 require './xml_builder'
 
 require 'json'
 require 'net/http'
 require 'cgi'
+require 'open3'
 
-class InvalidToken < StandardError; end
+class AuthenticationError < StandardError; end
 
 class Github
-  def initialize
-    @base_uri = "https://api.github.com"
-    @cache_file = ".repositoriescache"
-    @token_file = ".auth_token"
-  end
+  KEYCHAIN_ENTRY = "alfred-github-workflow".freeze
+  BASE_URI = "https://api.github.com"
+  CACHE_FILE_NAME = ".repositoriescache"
 
   def store_token(token)
-    if token && token.length > 0
-      File.open(@token_file, 'w') do |f|
-        f.write(token)
-      end
-      rebuild_user_repos_cache
-    end
+    _, err, st = Open3.capture3("security add-generic-password -D 'secure note' -a $USER -s #{KEYCHAIN_ENTRY} -w #{token} -U")
+    st.success?
   end
 
   def search_repo(query)
@@ -34,26 +29,32 @@ class Github
   end
 
   def rebuild_user_repos_cache
-    File.delete(@cache_file) if File.exists?(@cache_file)
+    File.delete(CACHE_FILE_NAME) if File.exists?(CACHE_FILE_NAME)
     cache_all_repos_for_user
   end
 
-  def test_authentication
-    load_token
-    return false if !@token || @token.length == 0
+  def ensure_authenticated!
+    load_token!
     res = get "/"
-    !res.has_key?('error')
+    if res.has_key?('error')
+      raise AuthenticationError.new("Github authentication failed / Please re-run gh-auth with valid token")
+    end
   end
 
   private
 
-  def load_token
-    @token = File.read(@token_file).strip if File.exists?(@token_file)
+  def load_token!
+    @token, err, st = Open3.capture3("security find-generic-password -a $USER -s #{KEYCHAIN_ENTRY} -w")
+    if !st.success?
+      raise AuthenticationError.new("Unable to retrieve access token from keychain / #{err}")
+    elsif !@token || @token.empty?
+      raise AuthenticationError.new("Invalid token retrieved from keychain / Please re-run gh-auth with valid token")
+    end
   end
 
   def load_and_cache_user_repos
-    if File.exists?(@cache_file)
-      JSON.parse(File.read(@cache_file))
+    if File.exists?(CACHE_FILE_NAME)
+      JSON.parse(File.read(CACHE_FILE_NAME))
     else
       cache_all_repos_for_user
     end
@@ -61,13 +62,13 @@ class Github
 
   # TODO: probably will do a search request instead of fetching all at once
   def cache_all_repos_for_user
-    raise InvalidToken unless test_authentication
+    ensure_authenticated!
     repos = []
     repos += get_user_repos
     get_user_orgs.each do |org|
       repos += get_org_repos( org['login'] )
     end
-    File.open(@cache_file, 'w') do |f|
+    File.open(CACHE_FILE_NAME, 'w') do |f|
       f.write repos.to_json
     end
     repos
@@ -108,7 +109,7 @@ class Github
 
   def search_all_repos(query)
     return [] if !query || query.length == 0
-    raise InvalidToken unless test_authentication
+    ensure_authenticated!
 
     parts = query.split('/', 2)
 
@@ -143,7 +144,7 @@ class Github
   def get(path, params = {})
     params['per_page'] = 100  # Note: 100 is the max. - see https://developer.github.com/v3/#pagination
     qs = params.map {|k, v| "#{CGI.escape k.to_s}=#{CGI.escape v.to_s}"}.join("&")
-    uri = URI("#{@base_uri}#{path}?#{qs}")
+    uri = URI("#{BASE_URI}#{path}?#{qs}")
 
     json_all = []
 
@@ -179,16 +180,16 @@ class Github
   end
 end
 
-query = ARGV[0]
 github = Github.new
-
 begin
-  if query == '--update'
+  case ARGV[0]
+  when '--update'
     github.rebuild_user_repos_cache
-  elsif query == '--auth'
-    github.store_token(ARGV[1])
-  else
-    results = github.search_repo(query || '')
+  when '--auth'
+    success = github.store_token(ARGV[1])
+    exit (success ? 0 : 1)
+  when '--search'
+    results = github.search_repo(ARGV[1] || '')
 
     output = XmlBuilder.build do |xml|
       xml.items do
@@ -204,10 +205,11 @@ begin
 
     puts output
   end
-rescue InvalidToken
+rescue AuthenticationError => e
+  main_message, secondary_message = e.message.split("/", 2)
   output = XmlBuilder.build do |xml|
     xml.items do
-      xml.item Item.new('gh-error', 'gh-auth ', "Missing or invalid token!", "Please set your token with gh-auth. ↩ to go there now.", 'yes')
+      xml.item Item.new('gh-error', 'gh-auth', main_message, secondary_message, 'yes')
     end
   end
 
