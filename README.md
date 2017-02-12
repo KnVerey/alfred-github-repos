@@ -1,5 +1,7 @@
 Quickly find your GitHub repositories from [Alfred](http://www.alfredapp.com/).
 
+Download the workflow from the [releases](https://github.com/KnVerey/alfred-github-repos/releases) page.
+
 This is a heavily rewritten fork of `edgarjs/alfred-github-repos` with different search behaviour and several new features. Read more about the changes [below](#whats-new-in-this-fork).
 
 ---
