@@ -13,25 +13,29 @@ class APIError < StandardError; end
 class Github
   KEYCHAIN_ENTRY = "alfred-github-workflow".freeze
   BASE_URI = "https://api.github.com"
+  USER_CACHE_FILE = ".user-cache"
 
   def store_token(token)
     _, err, st = Open3.capture3("security add-generic-password -a $USER -s #{KEYCHAIN_ENTRY} -w #{token} -U")
+    File.delete(USER_CACHE_FILE) if File.exist?(USER_CACHE_FILE)
     st.success?
   end
 
   def search_repo(query)
+    load_token!
     search_user_repos(query)
   end
 
-  private
-
-  def ensure_authenticated!
+  def refresh_users
+    File.delete(USER_CACHE_FILE) if File.exist?(USER_CACHE_FILE)
     load_token!
-    res = get "/"
-    if res.has_key?('error')
-      raise AuthenticationError.new("Github authentication failed / Please re-run gh-auth with valid token")
-    end
+    user_and_orgs
+  rescue AuthenticationError, APIError => e
+    puts e.message
+    false
   end
+
+  private
 
   def load_token!
     @token, err, st = Open3.capture3("security find-generic-password -a $USER -s #{KEYCHAIN_ENTRY} -w")
@@ -44,8 +48,6 @@ class Github
 
   def search_user_repos(keyword)
     return [] if !keyword || keyword.empty?
-    ensure_authenticated!
-
     user_params = user_and_orgs.each_with_object("") { |u, params| params << " user:#{u}" }
     results = get "/search/repositories", { "q" => "#{keyword}#{user_params} in:name sort:updated" }
     results['items'].map do |repo|
@@ -54,15 +56,22 @@ class Github
   end
 
   def user_and_orgs
-    @user_and_orgs ||= begin
-      results = get "/user/orgs"
-      users = results.each_with_object([]) do |org, orgs|
-        orgs << org["login"]
-      end
-      user_result = get "/user"
-      users << user_result["login"]
-      users
+    @user_and_orgs ||= []
+    return @user_and_orgs unless @user_and_orgs.empty?
+
+    if File.exist?(USER_CACHE_FILE)
+      @user_and_orgs = File.read(USER_CACHE_FILE).split("\n")
     end
+    return @user_and_orgs unless @user_and_orgs.empty?
+
+    results = get "/user/orgs"
+    results.each_with_object([]) do |org, orgs|
+      @user_and_orgs << org["login"]
+    end
+    user_result = get "/user"
+    @user_and_orgs << user_result["login"]
+    File.write(USER_CACHE_FILE, @user_and_orgs.join("\n"))
+    @user_and_orgs
   end
 
   def get(path, params = {})
@@ -83,12 +92,15 @@ class Github
   end
 end
 
-begin
-  case ARGV[0]
-  when '--auth'
-    success = Github.new.store_token(ARGV[1])
-    exit (success ? 0 : 1)
-  when '--search'
+case ARGV[0]
+when '--auth'
+  success = Github.new.store_token(ARGV[1])
+  exit success
+when '--refresh'
+  success = Github.new.refresh_users
+  exit success
+when '--search'
+  begin
     results = Github.new.search_repo(ARGV[1] || '')
 
     output = XmlBuilder.build do |xml|
@@ -99,21 +111,21 @@ begin
       end
     end
     puts output
-  end
-rescue AuthenticationError => e
-  main_message, secondary_message = e.message.split("/", 2)
-  output = XmlBuilder.build do |xml|
-    xml.items do
-      xml.item Item.new('gh-error', 'gh-auth', main_message, secondary_message, 'yes')
+  rescue AuthenticationError => e
+    main_message, secondary_message = e.message.split("/", 2)
+    output = XmlBuilder.build do |xml|
+      xml.items do
+        xml.item Item.new('gh-error', 'gh-auth', main_message, secondary_message, 'yes')
+      end
     end
-  end
-  puts output
-rescue APIError => e
-  main_message, secondary_message = e.message.split("/", 2)
-  output = XmlBuilder.build do |xml|
-    xml.items do
-      xml.item Item.new('gh-error', 'api-fail', main_message, secondary_message, 'yes')
+    puts output
+  rescue APIError => e
+    main_message, secondary_message = e.message.split("/", 2)
+    output = XmlBuilder.build do |xml|
+      xml.items do
+        xml.item Item.new('gh-error', 'api-fail', main_message, secondary_message, 'yes')
+      end
     end
+    puts output
   end
-  puts output
 end

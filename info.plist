@@ -21,19 +21,6 @@
 				<false/>
 			</dict>
 		</array>
-		<key>40B56441-0438-429E-82CE-5942262BCA05</key>
-		<array>
-			<dict>
-				<key>destinationuid</key>
-				<string>8CB21C29-3AF6-4E12-A2C8-E8670FE56AA8</string>
-				<key>modifiers</key>
-				<integer>0</integer>
-				<key>modifiersubtext</key>
-				<string></string>
-				<key>vitoclose</key>
-				<false/>
-			</dict>
-		</array>
 		<key>549B4661-C716-45E3-97F9-F69D72A70B6D</key>
 		<array>
 			<dict>
@@ -157,11 +144,6 @@ case "$qry" in
   gh-auth*) # switch to gh-auth
 	osascript -e 'tell Application "Alfred 2" to search "'"$qry"'"'
 	;;
-  *) # rebuild cache, then repeat search
-	./github --update &amp;&amp;
-    osascript -e 'tell application "Alfred 2" to run trigger "report-update-complete" in workflow "sh.edgar.alfred.GithubRepos"' &amp;&amp;
-	osascript -e 'tell Application "Alfred 2" to search "gh '"$qry"'"'
-	;;
 esac</string>
 				<key>scriptargtype</key>
 				<integer>0</integer>
@@ -183,11 +165,11 @@ esac</string>
 				<key>argumenttype</key>
 				<integer>2</integer>
 				<key>keyword</key>
-				<string>gh-update</string>
+				<string>gh-refresh</string>
 				<key>subtext</key>
-				<string>Rebuilds your local cache from GitHub</string>
+				<string>Rebuilds your local cache of user/orgs from GitHub</string>
 				<key>text</key>
-				<string>Update local cache of repositories</string>
+				<string>gh-refresh</string>
 				<key>withspace</key>
 				<false/>
 			</dict>
@@ -206,7 +188,12 @@ esac</string>
 				<key>escaping</key>
 				<integer>127</integer>
 				<key>script</key>
-				<string>./github --update</string>
+				<string>./github --refresh
+if [[ $? != 0 ]]; then
+	echo "Failed to refresh user cache"
+else
+	echo "Successfully refreshed user cache"
+fi</string>
 				<key>scriptargtype</key>
 				<integer>0</integer>
 				<key>scriptfile</key>
@@ -231,27 +218,14 @@ esac</string>
 				<key>removeextension</key>
 				<false/>
 				<key>text</key>
-				<string>Local cache has been rebuilt</string>
+				<string></string>
 				<key>title</key>
-				<string>Update complete!</string>
+				<string>{query}</string>
 			</dict>
 			<key>type</key>
 			<string>alfred.workflow.output.notification</string>
 			<key>uid</key>
 			<string>8CB21C29-3AF6-4E12-A2C8-E8670FE56AA8</string>
-			<key>version</key>
-			<integer>1</integer>
-		</dict>
-		<dict>
-			<key>config</key>
-			<dict>
-				<key>triggerid</key>
-				<string>report-update-complete</string>
-			</dict>
-			<key>type</key>
-			<string>alfred.workflow.trigger.external</string>
-			<key>uid</key>
-			<string>40B56441-0438-429E-82CE-5942262BCA05</string>
 			<key>version</key>
 			<integer>1</integer>
 		</dict>
@@ -350,13 +324,6 @@ fi</string>
 			<integer>700</integer>
 			<key>ypos</key>
 			<real>280</real>
-		</dict>
-		<key>40B56441-0438-429E-82CE-5942262BCA05</key>
-		<dict>
-			<key>xpos</key>
-			<integer>70</integer>
-			<key>ypos</key>
-			<integer>220</integer>
 		</dict>
 		<key>549B4661-C716-45E3-97F9-F69D72A70B6D</key>
 		<dict>
