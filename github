@@ -8,30 +8,22 @@ require 'cgi'
 require 'open3'
 
 class AuthenticationError < StandardError; end
+class APIError < StandardError; end
 
 class Github
   KEYCHAIN_ENTRY = "alfred-github-workflow".freeze
   BASE_URI = "https://api.github.com"
-  CACHE_FILE_NAME = ".repositoriescache"
 
   def store_token(token)
-    _, err, st = Open3.capture3("security add-generic-password -D 'secure note' -a $USER -s #{KEYCHAIN_ENTRY} -w #{token} -U")
+    _, err, st = Open3.capture3("security add-generic-password -a $USER -s #{KEYCHAIN_ENTRY} -w #{token} -U")
     st.success?
   end
 
   def search_repo(query)
-    repos = load_and_cache_user_repos
-    results = repos.select do |repo|
-      repo['name'] =~ Regexp.new(query, 'i')
-    end
-    results += search_all_repos(query) if query =~ /\//
-    results.uniq
+    search_user_repos(query)
   end
 
-  def rebuild_user_repos_cache
-    File.delete(CACHE_FILE_NAME) if File.exists?(CACHE_FILE_NAME)
-    cache_all_repos_for_user
-  end
+  private
 
   def ensure_authenticated!
     load_token!
@@ -40,8 +32,6 @@ class Github
       raise AuthenticationError.new("Github authentication failed / Please re-run gh-auth with valid token")
     end
   end
-
-  private
 
   def load_token!
     @token, err, st = Open3.capture3("security find-generic-password -a $USER -s #{KEYCHAIN_ENTRY} -w")
@@ -52,157 +42,62 @@ class Github
     end
   end
 
-  def load_and_cache_user_repos
-    if File.exists?(CACHE_FILE_NAME)
-      JSON.parse(File.read(CACHE_FILE_NAME))
-    else
-      cache_all_repos_for_user
-    end
-  end
-
-  # TODO: probably will do a search request instead of fetching all at once
-  def cache_all_repos_for_user
-    ensure_authenticated!
-    repos = []
-    repos += get_user_repos
-    get_user_orgs.each do |org|
-      repos += get_org_repos( org['login'] )
-    end
-    File.open(CACHE_FILE_NAME, 'w') do |f|
-      f.write repos.to_json
-    end
-    repos
-  end
-
-  def get_user_repos
-    res = get "/user/repos"
-    if res.is_a?(Array)
-      res.map do |repo|
-        { 'name' => repo['full_name'], 'url' => repo['html_url'] }
-      end
-    else # TODO: handle error
-      []
-    end
-  end
-
-  def get_user_orgs
-    res = get "/user/orgs"
-    if res.is_a?(Array)
-      res.map do |org|
-        { 'login' => org['login'] }
-      end
-    else # TODO: handle error
-      []
-    end
-  end
-
-  def get_org_repos(org)
-    res = get "/orgs/#{org}/repos"
-    if res.is_a?(Array)
-      res.map do |repo|
-        { 'name' => repo['full_name'], 'url' => repo['html_url'] }
-      end
-    else # TODO: handle error
-      []
-    end
-  end
-
-  def search_all_repos(query)
-    return [] if !query || query.length == 0
+  def search_user_repos(keyword)
+    return [] if !keyword || keyword.empty?
     ensure_authenticated!
 
-    parts = query.split('/', 2)
+    user_params = user_and_orgs.each_with_object("") { |u, params| params << " user:#{u}" }
+    results = get "/search/repositories", { "q" => "#{keyword}#{user_params} in:name sort:updated" }
+    results['items'].map do |repo|
+      { 'name' => repo['full_name'], 'url' => repo['html_url'] }
+    end
+  end
 
-    if parts.length == 1 and parts[0].length > 0
-      res = get "/search/repositories", { "q" => query }
-      if res.is_a?(Hash) and res.has_key?('items')
-        res['items'].map do |repo|
-          { 'name' => repo['full_name'], 'url' => repo['html_url'] }
-        end
-      else # TODO: handle error
-        []
+  def user_and_orgs
+    @user_and_orgs ||= begin
+      results = get "/user/orgs"
+      users = results.each_with_object([]) do |org, orgs|
+        orgs << org["login"]
       end
-    elsif parts.length == 2 and parts[0].length > 0
-      user = parts[0]
-      userQuery = parts[1]
-      res = get "/users/#{user}/repos"
-      if res.is_a?(Array)
-        repos = res.select do |repo|
-          repo['name'] =~ Regexp.new(userQuery, 'i')
-        end
-        repos.map do |repo|
-          { 'name' => repo['full_name'], 'url' => repo['html_url'] }
-        end
-      else # TODO: handle error
-        []
-      end
-    else
-      []
+      user_result = get "/user"
+      users << user_result["login"]
+      users
     end
   end
 
   def get(path, params = {})
-    params['per_page'] = 100  # Note: 100 is the max. - see https://developer.github.com/v3/#pagination
+    params['per_page'] = 10 # number visible in Alfred
     qs = params.map {|k, v| "#{CGI.escape k.to_s}=#{CGI.escape v.to_s}"}.join("&")
     uri = URI("#{BASE_URI}#{path}?#{qs}")
 
-    json_all = []
-
-    begin
-
-      res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
-        req = Net::HTTP::Get.new(uri)
-        req['Accept'] = "application/vnd.github.v3+json"
-        req['Authorization'] = "token #{@token}"
-        http.request(req)
-      end
-
-      json = JSON.parse(res.body)
-
-      if not res.kind_of? Net::HTTPSuccess
-        return { 'error' => json['message'] }
-      end
-
-      if json.is_a?(Array) # result is paged
-        json_all.concat json
-        # See if more pages must be retrieved by testing for and extracting the link header's "next" URL.
-        # See https://developer.github.com/guides/traversing-with-pagination/
-        uri = URI((res['link'].match /<([^>]+)>;\s*rel="next"/)[1]) rescue nil
-        break if uri.nil?
-      else  # result is not an array and therefore not paged
-        json_all = json
-        break
-      end
-
-    end while true
-
-    json_all
+    response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
+      req = Net::HTTP::Get.new(uri)
+      req['Accept'] = "application/vnd.github.v3+json"
+      req['Authorization'] = "token #{@token}"
+      http.request(req)
+    end
+    if response.code.to_i > 399
+      raise APIError.new("Error communicating with Github / GET #{path} #{response.code}")
+    end
+    JSON.parse(response.body)
   end
 end
 
-github = Github.new
 begin
   case ARGV[0]
-  when '--update'
-    github.rebuild_user_repos_cache
   when '--auth'
-    success = github.store_token(ARGV[1])
+    success = Github.new.store_token(ARGV[1])
     exit (success ? 0 : 1)
   when '--search'
-    results = github.search_repo(ARGV[1] || '')
+    results = Github.new.search_repo(ARGV[1] || '')
 
     output = XmlBuilder.build do |xml|
       xml.items do
-        if results.length > 0
-          results.each do |repo|
-            xml.item Item.new(repo['url'], repo['url'], repo['name'], repo['url'], 'yes')
-          end
-        else
-          xml.item Item.new(nil, query, 'Update the repository cache and try again.', 'Rebuilds your local cache from GitHub, then searches again; gh-update to rebuild anytime.', 'yes', 'FE3390F7-206C-45C4-94BB-5DD14DE23A1B.png')
+        results.each do |repo|
+          xml.item Item.new(repo['url'], repo['url'], repo['name'], repo['url'], 'yes')
         end
       end
     end
-
     puts output
   end
 rescue AuthenticationError => e
@@ -212,6 +107,13 @@ rescue AuthenticationError => e
       xml.item Item.new('gh-error', 'gh-auth', main_message, secondary_message, 'yes')
     end
   end
-
+  puts output
+rescue APIError => e
+  main_message, secondary_message = e.message.split("/", 2)
+  output = XmlBuilder.build do |xml|
+    xml.items do
+      xml.item Item.new('gh-error', 'api-fail', main_message, secondary_message, 'yes')
+    end
+  end
   puts output
 end

@@ -1,10 +1,13 @@
 Quickly find your GitHub repositories from [Alfred](http://www.alfredapp.com/).
 
-Forked from edgarjs/alfred-github-repos
+Based on a fork of edgarjs/alfred-github-repos, but changed A LOT to suit my needs.
 
 # Different in this fork
 - Uses your OSX keychain to store your Github auth token
 - Uses the ruby version I personally want (`#!/opt/rubies/2.3.3/bin/ruby`) instead of system ruby
+- Only searches repos that belong to you or your organizations
+- Does fresh search every time
+- Limited to 10 results (more isn't useful in Alfred anyway IMO)
 
 # Usage
 
