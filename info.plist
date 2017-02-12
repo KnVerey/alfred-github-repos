@@ -5,7 +5,7 @@
 	<key>bundleid</key>
 	<string>sh.edgar.alfred.GithubRepos</string>
 	<key>category</key>
-	<string>Internet</string>
+	<string>Productivity</string>
 	<key>connections</key>
 	<dict>
 		<key>0181D01E-433D-4461-B212-F01CBDA53091</key>
@@ -17,17 +17,8 @@
 				<integer>0</integer>
 				<key>modifiersubtext</key>
 				<string></string>
-			</dict>
-		</array>
-		<key>40B56441-0438-429E-82CE-5942262BCA05</key>
-		<array>
-			<dict>
-				<key>destinationuid</key>
-				<string>8CB21C29-3AF6-4E12-A2C8-E8670FE56AA8</string>
-				<key>modifiers</key>
-				<integer>0</integer>
-				<key>modifiersubtext</key>
-				<string></string>
+				<key>vitoclose</key>
+				<false/>
 			</dict>
 		</array>
 		<key>549B4661-C716-45E3-97F9-F69D72A70B6D</key>
@@ -39,6 +30,8 @@
 				<integer>0</integer>
 				<key>modifiersubtext</key>
 				<string></string>
+				<key>vitoclose</key>
+				<false/>
 			</dict>
 		</array>
 		<key>9C8AF5E1-FB99-44C2-9FFD-5DFC67366C10</key>
@@ -50,6 +43,8 @@
 				<integer>0</integer>
 				<key>modifiersubtext</key>
 				<string></string>
+				<key>vitoclose</key>
+				<false/>
 			</dict>
 		</array>
 		<key>EFFBF4FD-3C90-4266-BE53-DE912E5FAFC4</key>
@@ -61,6 +56,8 @@
 				<integer>0</integer>
 				<key>modifiersubtext</key>
 				<string></string>
+				<key>vitoclose</key>
+				<false/>
 			</dict>
 		</array>
 		<key>FE3390F7-206C-45C4-94BB-5DD14DE23A1B</key>
@@ -72,6 +69,8 @@
 				<integer>0</integer>
 				<key>modifiersubtext</key>
 				<string></string>
+				<key>vitoclose</key>
+				<false/>
 			</dict>
 		</array>
 	</dict>
@@ -88,16 +87,30 @@
 		<dict>
 			<key>config</key>
 			<dict>
+				<key>alfredfiltersresults</key>
+				<false/>
 				<key>argumenttype</key>
-				<integer>1</integer>
+				<integer>0</integer>
 				<key>escaping</key>
 				<integer>63</integer>
 				<key>keyword</key>
 				<string>gh</string>
+				<key>queuedelaycustom</key>
+				<integer>1</integer>
+				<key>queuedelayimmediatelyinitially</key>
+				<false/>
+				<key>queuedelaymode</key>
+				<integer>2</integer>
+				<key>queuemode</key>
+				<integer>1</integer>
 				<key>runningsubtext</key>
 				<string>Fetching repositories from github...</string>
 				<key>script</key>
-				<string>ruby github "{query}"</string>
+				<string>./github --search "{query}"</string>
+				<key>scriptargtype</key>
+				<integer>0</integer>
+				<key>scriptfile</key>
+				<string></string>
 				<key>subtext</key>
 				<string>Search your github repositories for '{query}'</string>
 				<key>title</key>
@@ -112,11 +125,13 @@
 			<key>uid</key>
 			<string>EFFBF4FD-3C90-4266-BE53-DE912E5FAFC4</string>
 			<key>version</key>
-			<integer>0</integer>
+			<integer>2</integer>
 		</dict>
 		<dict>
 			<key>config</key>
 			<dict>
+				<key>concurrently</key>
+				<false/>
 				<key>escaping</key>
 				<integer>102</integer>
 				<key>script</key>
@@ -129,12 +144,11 @@ case "$qry" in
   gh-auth*) # switch to gh-auth
 	osascript -e 'tell Application "Alfred 2" to search "'"$qry"'"'
 	;;
-  *) # rebuild cache, then repeat search
-	ruby github --update &amp;&amp;
-    osascript -e 'tell application "Alfred 2" to run trigger "report-update-complete" in workflow "sh.edgar.alfred.GithubRepos"' &amp;&amp;
-	osascript -e 'tell Application "Alfred 2" to search "gh '"$qry"'"'
-	;;
 esac</string>
+				<key>scriptargtype</key>
+				<integer>0</integer>
+				<key>scriptfile</key>
+				<string></string>
 				<key>type</key>
 				<integer>0</integer>
 			</dict>
@@ -143,7 +157,7 @@ esac</string>
 			<key>uid</key>
 			<string>AAF6AA90-74F5-448C-A942-5C9FAF3F1B95</string>
 			<key>version</key>
-			<integer>0</integer>
+			<integer>2</integer>
 		</dict>
 		<dict>
 			<key>config</key>
@@ -151,11 +165,11 @@ esac</string>
 				<key>argumenttype</key>
 				<integer>2</integer>
 				<key>keyword</key>
-				<string>gh-update</string>
+				<string>gh-refresh</string>
 				<key>subtext</key>
-				<string>Rebuilds your local cache from GitHub</string>
+				<string>Rebuilds your local cache of user/orgs from GitHub</string>
 				<key>text</key>
-				<string>Update local cache of repositories</string>
+				<string>gh-refresh</string>
 				<key>withspace</key>
 				<false/>
 			</dict>
@@ -164,15 +178,26 @@ esac</string>
 			<key>uid</key>
 			<string>FE3390F7-206C-45C4-94BB-5DD14DE23A1B</string>
 			<key>version</key>
-			<integer>0</integer>
+			<integer>1</integer>
 		</dict>
 		<dict>
 			<key>config</key>
 			<dict>
+				<key>concurrently</key>
+				<false/>
 				<key>escaping</key>
 				<integer>127</integer>
 				<key>script</key>
-				<string>ruby github --update</string>
+				<string>./github --refresh
+if [[ $? != 0 ]]; then
+	echo "Failed to refresh user cache"
+else
+	echo "Successfully refreshed user cache"
+fi</string>
+				<key>scriptargtype</key>
+				<integer>0</integer>
+				<key>scriptfile</key>
+				<string></string>
 				<key>type</key>
 				<integer>0</integer>
 			</dict>
@@ -181,7 +206,7 @@ esac</string>
 			<key>uid</key>
 			<string>549B4661-C716-45E3-97F9-F69D72A70B6D</string>
 			<key>version</key>
-			<integer>0</integer>
+			<integer>2</integer>
 		</dict>
 		<dict>
 			<key>config</key>
@@ -190,36 +215,19 @@ esac</string>
 				<false/>
 				<key>onlyshowifquerypopulated</key>
 				<false/>
-				<key>output</key>
-				<integer>0</integer>
 				<key>removeextension</key>
 				<false/>
-				<key>sticky</key>
-				<false/>
 				<key>text</key>
-				<string>Local cache has been rebuilt</string>
+				<string></string>
 				<key>title</key>
-				<string>Update complete!</string>
+				<string>{query}</string>
 			</dict>
 			<key>type</key>
 			<string>alfred.workflow.output.notification</string>
 			<key>uid</key>
 			<string>8CB21C29-3AF6-4E12-A2C8-E8670FE56AA8</string>
 			<key>version</key>
-			<integer>0</integer>
-		</dict>
-		<dict>
-			<key>config</key>
-			<dict>
-				<key>triggerid</key>
-				<string>report-update-complete</string>
-			</dict>
-			<key>type</key>
-			<string>alfred.workflow.trigger.external</string>
-			<key>uid</key>
-			<string>40B56441-0438-429E-82CE-5942262BCA05</string>
-			<key>version</key>
-			<integer>0</integer>
+			<integer>1</integer>
 		</dict>
 		<dict>
 			<key>config</key>
@@ -240,11 +248,13 @@ esac</string>
 			<key>uid</key>
 			<string>9C8AF5E1-FB99-44C2-9FFD-5DFC67366C10</string>
 			<key>version</key>
-			<integer>0</integer>
+			<integer>1</integer>
 		</dict>
 		<dict>
 			<key>config</key>
 			<dict>
+				<key>concurrently</key>
+				<false/>
 				<key>escaping</key>
 				<integer>102</integer>
 				<key>script</key>
@@ -254,10 +264,17 @@ qry="${qry// /}"
 if [[ -z $qry ]]; then
 	open https://github.com/settings/tokens/new
 else
-	ruby github --auth "$qry" &gt;/dev/null
-	echo "Token saved!"
-fi
-</string>
+	./github --auth "$qry"
+	if [[ $? != 0 ]]; then
+		echo "Failed to store auth token in keychain"
+	else
+		echo "Successfully stored auth token in keychain"
+	fi
+fi</string>
+				<key>scriptargtype</key>
+				<integer>0</integer>
+				<key>scriptfile</key>
+				<string></string>
 				<key>type</key>
 				<integer>0</integer>
 			</dict>
@@ -266,7 +283,7 @@ fi
 			<key>uid</key>
 			<string>0181D01E-433D-4461-B212-F01CBDA53091</string>
 			<key>version</key>
-			<integer>0</integer>
+			<integer>2</integer>
 		</dict>
 		<dict>
 			<key>config</key>
@@ -275,12 +292,10 @@ fi
 				<false/>
 				<key>onlyshowifquerypopulated</key>
 				<false/>
-				<key>output</key>
-				<integer>0</integer>
 				<key>removeextension</key>
 				<false/>
-				<key>sticky</key>
-				<false/>
+				<key>text</key>
+				<string></string>
 				<key>title</key>
 				<string>{query}</string>
 			</dict>
@@ -289,7 +304,7 @@ fi
 			<key>uid</key>
 			<string>2DA5013F-ECBE-47B0-B940-9A997CB227BB</string>
 			<key>version</key>
-			<integer>0</integer>
+			<integer>1</integer>
 		</dict>
 	</array>
 	<key>readme</key>
@@ -298,46 +313,57 @@ fi
 	<dict>
 		<key>0181D01E-433D-4461-B212-F01CBDA53091</key>
 		<dict>
+			<key>xpos</key>
+			<integer>500</integer>
 			<key>ypos</key>
 			<real>280</real>
 		</dict>
 		<key>2DA5013F-ECBE-47B0-B940-9A997CB227BB</key>
 		<dict>
+			<key>xpos</key>
+			<integer>700</integer>
 			<key>ypos</key>
 			<real>280</real>
 		</dict>
-		<key>40B56441-0438-429E-82CE-5942262BCA05</key>
-		<dict>
-			<key>ypos</key>
-			<real>190</real>
-		</dict>
 		<key>549B4661-C716-45E3-97F9-F69D72A70B6D</key>
 		<dict>
+			<key>xpos</key>
+			<integer>500</integer>
 			<key>ypos</key>
 			<real>130</real>
 		</dict>
 		<key>8CB21C29-3AF6-4E12-A2C8-E8670FE56AA8</key>
 		<dict>
+			<key>xpos</key>
+			<integer>700</integer>
 			<key>ypos</key>
 			<real>130</real>
 		</dict>
 		<key>9C8AF5E1-FB99-44C2-9FFD-5DFC67366C10</key>
 		<dict>
+			<key>xpos</key>
+			<integer>300</integer>
 			<key>ypos</key>
 			<real>280</real>
 		</dict>
 		<key>AAF6AA90-74F5-448C-A942-5C9FAF3F1B95</key>
 		<dict>
+			<key>xpos</key>
+			<integer>500</integer>
 			<key>ypos</key>
 			<real>10</real>
 		</dict>
 		<key>EFFBF4FD-3C90-4266-BE53-DE912E5FAFC4</key>
 		<dict>
+			<key>xpos</key>
+			<integer>300</integer>
 			<key>ypos</key>
 			<real>10</real>
 		</dict>
 		<key>FE3390F7-206C-45C4-94BB-5DD14DE23A1B</key>
 		<dict>
+			<key>xpos</key>
+			<integer>300</integer>
 			<key>ypos</key>
 			<real>130</real>
 		</dict>
