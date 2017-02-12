@@ -28,12 +28,10 @@ This workflow is not compatible with Alfred2. If you aren't able to upgrade, che
 
 **2. Customize your ruby version (optional)**
 
-This workflow runs a ruby script. By default it will use `/opt/rubies/2.3.3/bin` if available, or your system ruby otherwise (which may be very old).
+This workflow runs a ruby script. By default it will use your system ruby, which may be very old. To use a specific ruby version, update the `rubypath` workflow variable as follows:
 
-To use a specific ruby version, change `export PATH="/opt/rubies/2.3.3/bin:$PATH` to `export PATH="/path/to/your/ruby/bin:$PATH"` in the following three workflow objects:
-- gh Script Filter
-- the "/bin/bash Run Script" for gh-refresh
-- the "/bin/bash Run Script" for gh-auth
+![Step1](var-help1.png "Click here")
+![Step2](var-help2.png "Add the variable")
 
 **3. Identify yourself (required)**
 
@@ -77,7 +75,7 @@ Implemented some friendly messages for cases not covered upstream.
 
 ### :nut_and_bolt: Ruby version
 
-Modifies `$PATH` before executing the script to potentially use a more recent ruby version. The one I want to use is at `/opt/rubies/2.3.3/bin/ruby`, so that's what's set by default as an example. If you don't have a ruby version there, your system ruby will still be used.
+Option to modify the `$PATH` before executing the script to use a more recent ruby version. Set the `rubypath` workflow variable to use this feature (see [Configuration](#configuration) for instructions).
 
 # License
 

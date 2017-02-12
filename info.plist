@@ -106,8 +106,9 @@
 				<key>runningsubtext</key>
 				<string>Fetching repositories from github...</string>
 				<key>script</key>
-				<string># change this to a recent ruby version on your system
-export PATH="/opt/rubies/2.3.3/bin:$PATH"
+				<string>if [[ "${rubypath}" ]]; then
+	export PATH="${rubypath}:$PATH"
+fi
 
 ./github --search "{query}"</string>
 				<key>scriptargtype</key>
@@ -191,8 +192,9 @@ esac</string>
 				<key>escaping</key>
 				<integer>127</integer>
 				<key>script</key>
-				<string># change this to a recent ruby version on your system
-export PATH="/opt/rubies/2.3.3/bin:$PATH"
+				<string>if [[ "${rubypath}" ]]; then
+	export PATH="${rubypath}:$PATH"
+fi
 
 ./github --refresh</string>
 				<key>scriptargtype</key>
@@ -238,8 +240,9 @@ export PATH="/opt/rubies/2.3.3/bin:$PATH"
 				<key>escaping</key>
 				<integer>102</integer>
 				<key>script</key>
-				<string># change this to a recent ruby version on your system
-export PATH="/opt/rubies/2.3.3/bin:$PATH"
+				<string>if [[ "${rubypath}" ]]; then
+	export PATH="${rubypath}:$PATH"
+fi
 
 qry="{query}"
 qry="${qry// /}"
@@ -367,6 +370,13 @@ fi</string>
 			<real>130</real>
 		</dict>
 	</dict>
+	<key>variables</key>
+	<dict>
+		<key>rubypath</key>
+		<string>/opt/rubies/2.3.3/bin</string>
+	</dict>
+	<key>version</key>
+	<string>1.0.0</string>
 	<key>webaddress</key>
 	<string>https://github.com/KnVerey/alfred-github-repos</string>
 </dict>
