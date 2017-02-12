@@ -106,7 +106,10 @@
 				<key>runningsubtext</key>
 				<string>Fetching repositories from github...</string>
 				<key>script</key>
-				<string>./github --search "{query}"</string>
+				<string># change this to a recent ruby version on your system
+export PATH="/opt/rubies/2.3.3/bin:$PATH"
+
+./github --search "{query}"</string>
 				<key>scriptargtype</key>
 				<integer>0</integer>
 				<key>scriptfile</key>
@@ -188,7 +191,10 @@ esac</string>
 				<key>escaping</key>
 				<integer>127</integer>
 				<key>script</key>
-				<string>./github --refresh
+				<string># change this to a recent ruby version on your system
+export PATH="/opt/rubies/2.3.3/bin:$PATH"
+
+./github --refresh
 if [[ $? != 0 ]]; then
 	echo "Failed to refresh user cache"
 else
@@ -258,7 +264,10 @@ fi</string>
 				<key>escaping</key>
 				<integer>102</integer>
 				<key>script</key>
-				<string>qry="{query}"
+				<string># change this to a recent ruby version on your system
+export PATH="/opt/rubies/2.3.3/bin:$PATH"
+
+qry="{query}"
 qry="${qry// /}"
 
 if [[ -z $qry ]]; then

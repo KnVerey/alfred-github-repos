@@ -5,8 +5,15 @@ Based on a fork of `edgarjs/alfred-github-repos`, but changed A LOT to suit my n
 # What's different in this fork?
 
 ### Security
-- Uses the OSX keychain to store the Github auth token instead of writing it to a file on disk.
-- Uses `/opt/rubies/2.3.3/bin/ruby` instead of the (likely super old) system ruby. You'll probably need to change this to point to a ruby version you have installed. To open your copy of the workflow, right-click on it in Alfred and choose "Open in Finder" or "Open in Terminal" as you prefer. The line you need to modify is at the top of the "github" file.
+
+Uses the OSX keychain to store the Github auth token instead of writing it to a file on disk.
+
+### Ruby version
+
+Modifies `$PATH` before executing the script to potentially use a more recent ruby version. The one I want to use is at `/opt/rubies/2.3.3/bin/ruby`, so that's what's set by default as an example. If you don't have a ruby version there, your system ruby will still be used. To use a recent ruby version on your system, change `export PATH="/opt/rubies/2.3.3/bin:$PATH` to `export PATH="/path/to/your/ruby/bin:$PATH"` in the following three workflow objects:
+- gh Script Filter
+- the "/bin/bash Run Script" for gh-refresh
+- the "/bin/bash Run Script" for gh-auth
 
 ### Search behaviour
 - Only searches the names of repos that belong to you or your organizations.

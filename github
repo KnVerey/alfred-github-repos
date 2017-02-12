@@ -1,4 +1,4 @@
-#!/opt/rubies/2.3.3/bin/ruby
+#!/usr/bin/env ruby
 
 require './xml_builder'
 
