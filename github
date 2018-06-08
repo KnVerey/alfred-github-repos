@@ -34,7 +34,8 @@ class Github
   private
 
   def load_token!
-    @token, err, st = Open3.capture3("security find-generic-password -a $USER -s #{KEYCHAIN_ENTRY} -w")
+    token, err, st = Open3.capture3("security find-generic-password -a $USER -s #{KEYCHAIN_ENTRY} -w")
+    @token = strip_non_printable_characters(token)
     if !st.success?
       raise AuthenticationError.new("Keychain entry not found. Use gh-auth to fix this.")
     elsif !@token || @token.empty?
@@ -97,6 +98,10 @@ class Github
       raise APIError.new("Error communicating with Github. Details: GET #{path} #{response_code}")
     end
     JSON.parse(response.body)
+  end
+
+  def strip_non_printable_characters(string)
+    string.gsub(/[^[:print:]]/i, '')
   end
 end
 
