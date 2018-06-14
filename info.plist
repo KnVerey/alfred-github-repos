@@ -112,7 +112,7 @@
 				<key>queuedelaymode</key>
 				<integer>2</integer>
 				<key>queuemode</key>
-				<integer>1</integer>
+				<integer>2</integer>
 				<key>runningsubtext</key>
 				<string>Fetching repositories from github...</string>
 				<key>script</key>
