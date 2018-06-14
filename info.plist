@@ -303,7 +303,7 @@ fi</string>
 				<key>subtext</key>
 				<string>Just ↩ to go to https://github.com/settings/tokens/new now to create a token with scope 'repo'.</string>
 				<key>text</key>
-				<string>gh-auth TOKEN</string>
+				<string>gh-auth [TOKEN]</string>
 				<key>withspace</key>
 				<true/>
 			</dict>

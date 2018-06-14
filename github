@@ -127,7 +127,7 @@ when '--search'
     results = Github.new.search_repo(ARGV[1] || '')
     alfred_results = results.map do |repo|
       {
-        "uid" => "gh-search-#{ARGV[1]}",
+        "uid" => repo['name'],
         "title" => repo['name'],
         "subtitle" => repo['url'],
         "arg" => repo['url'],
