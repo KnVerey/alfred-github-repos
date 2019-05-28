@@ -78,7 +78,7 @@ class Github
   end
 
   def get(path, params = {})
-    params['per_page'] = 10 # number visible in Alfred
+    params['per_page'] = 15 # slightly more than shown by default
     qs = params.map {|k, v| "#{CGI.escape k.to_s}=#{CGI.escape v.to_s}"}.join("&")
     uri = URI("#{BASE_URI}#{path}?#{qs}")
 
@@ -101,7 +101,7 @@ class Github
   end
 
   def strip_non_printable_characters(string)
-    string.gsub(/[^[:print:]]/i, '')
+    string.gsub(/[^[:print:]]/i, '').strip
   end
 end
 

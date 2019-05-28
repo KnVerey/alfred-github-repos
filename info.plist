@@ -99,6 +99,10 @@
 			<dict>
 				<key>alfredfiltersresults</key>
 				<false/>
+				<key>alfredfiltersresultsmatchmode</key>
+				<integer>0</integer>
+				<key>argumenttrimmode</key>
+				<integer>0</integer>
 				<key>argumenttype</key>
 				<integer>0</integer>
 				<key>escaping</key>
@@ -407,10 +411,10 @@ fi</string>
 	<key>variables</key>
 	<dict>
 		<key>rubypath</key>
-		<string>/opt/rubies/2.3.3/bin</string>
+		<string>/opt/rubies/2.6.1/bin</string>
 	</dict>
 	<key>version</key>
-	<string>1.0.1</string>
+	<string>1.0.2</string>
 	<key>webaddress</key>
 	<string>https://github.com/KnVerey/alfred-github-repos</string>
 </dict>
