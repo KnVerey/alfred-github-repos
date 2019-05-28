@@ -39,7 +39,7 @@ This workflow runs a ruby script. By default it will use your system ruby, which
 
 This workflow requires a github personal access token to be able to list your private and public repositories. This token will be saved in your OSX keychain.
 
-To generate an access token, go to [create a new personal access token](https://github.com/settings/tokens/new). You can enter any description you'd like. Make sure to check both the `repo` and `public_repo` options (read private and public repositories).
+To generate an access token, go to [create a new personal access token](https://github.com/settings/tokens/new?description=alfred-github-repos&scopes=repo). You can enter any description you'd like. Make sure to check both the `repo` and `public_repo` options (read private and public repositories).
 
 ![Access token help](access-token-screenshot.png)
 
